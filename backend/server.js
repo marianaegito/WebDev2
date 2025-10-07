@@ -13,6 +13,20 @@ app.use(express.json());
 
 const SECRET_KEY="123456789";
 
+// Local do arquivo (simula o banco de dados)
+const localUsuarios = path.json(__dirname, 'usuario.json')
+
+// Criando uma função para ler o arquivo usuario
+const consultarUsuarios = ()=>{
+    const data = fs.readFileSync(localUsuarios, "utf-8")
+    return JSON.parse(data)
+}
+
+// Função para gravar usuario
+const salvarUsuarios =(users)=>{
+    fs.writeFileSync(localUsuarios,JSON.stringify(users,null,2))
+}
+
 
 
 app.listen(prot,()=>{
