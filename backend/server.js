@@ -27,6 +27,28 @@ const salvarUsuarios =(users)=>{
     fs.writeFileSync(localUsuarios,JSON.stringify(users,null,2))
 }
 
+// Rota Register 
+app.post("/register", async(req,res)=>{
+    // desttruct - passando os parametros que serão utilizados na requisiçãpo 
+    const {email,senha}=req.body
+
+    if(!email || !senha){
+        return res.status(400).json({message:"email e senha e senha inválidas"})
+    }
+
+    const users = consultarUsuarios();
+    if(users.find(user=>user.email === email)){
+        return res.status(400).json({message:"email já cadastrado"})
+    }
+
+    // Criando a cripotografia
+    const hashSenha = await bcrypt.hash(senha,10);
+    const novoUsuario = {id:Date.now(),email, senha:hashSenha};
+    users.push(novoUsuario);
+    salvarUsuarios(users);
+
+    res.status(201).json({message:"Usuário registrado com sucesso!"})
+})
 
 
 app.listen(prot,()=>{
