@@ -1,56 +1,77 @@
-const express = require("express")
-const fs = require("fs")
-const path = require("path")
-const bcrypt = require("bcrypt")
-const jwt = require("cors")
-const cors = require("cors")
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const cors = require("cors");
+
 
 const app = express();
-const PORT = 5001;
+const port = 5001;
 
 app.use(cors());
 app.use(express.json());
 
-const SECRET_KEY="123456789";
+const SECRET_KEY = "123456789";
 
-// Local do arquivo (simula o banco de dados)
-const localUsuarios = path.json(__dirname, 'usuario.json')
+//LOCAL DO ARQUIVO (SIMULA O BANCO DE DADOS)
+const localUsuarios = path.join(__dirname,'usuario.json')
 
-// Criando uma função para ler o arquivo usuario
+// FUNÇÃO PARA LER O ARQUIVO USUARIOS
 const consultarUsuarios = ()=>{
     const data = fs.readFileSync(localUsuarios, "utf-8")
     return JSON.parse(data)
 }
 
-// Função para gravar usuario
-const salvarUsuarios =(users)=>{
+//FUNÇÃO PARA GRAVAR DADOS NO ARQUIVO USUARIOS
+const salvarusuarios = (users)=>{
     fs.writeFileSync(localUsuarios,JSON.stringify(users,null,2))
 }
 
-// Rota Register 
-app.post("/register", async(req,res)=>{
-    // desttruct - passando os parametros que serão utilizados na requisiçãpo 
-    const {email,senha}=req.body
 
-    if(!email || !senha){
-        return res.status(400).json({message:"email e senha e senha inválidas"})
+// ROTA LOGIN
+
+app.post("/login", async(req,res)=>{
+    const {email,senha}= req.body;
+    const users = consultarUsuarios();
+    const user =users.find(user=>user.email ===email)
+
+    if(!user){
+        return res.status(400).json({message:"Usuário/senha inválidos"})
+    }
+    const hashSenha = await bcrypt.compare(senha,user.senha);
+    if(!hashSenha){
+       return res.status(400).json({message:"senha inválida"})
+    }
+    const token = jwt.sign({id:user.id,email:user.email},SECRET_KEY,{expiresIn: "2m"});
+    res.json({message:"Login realizado com sucesso", token})
+})
+
+//ROTA REGISTER
+app.post("/register", async(req,res)=>{
+    //destruct - passando os parametros que serão utilizados na requisição
+    const {email,senha}= req.body
+
+    if(!email || !senha){ 
+        return res.status(400).json({message: "email e senha inválidos"})
     }
 
     const users = consultarUsuarios();
     if(users.find(user=>user.email === email)){
-        return res.status(400).json({message:"email já cadastrado"})
+        return res.status(400).json({mssage:"email já cadastrado"})
     }
 
-    // Criando a cripotografia
-    const hashSenha = await bcrypt.hash(senha,10);
-    const novoUsuario = {id:Date.now(),email, senha:hashSenha};
-    users.push(novoUsuario);
-    salvarUsuarios(users);
+//CRIANDO A CRIPTOGRAFIA
+const hashSenha = await bcrypt.hash(senha,10);
+const novoUsuario = {id:Date.now(),email, senha:hashSenha};
+users.push(novoUsuario);
+salvarusuarios(users);
 
-    res.status(201).json({message:"Usuário registrado com sucesso!"})
+res.status(201).json({message:"Usuário registrado com sucesso"})
+
 })
 
-
-app.listen(prot,()=>{
-    console.log(`Servidor rodando na porta http://localhost:$(port)`);
+app.listen(port,()=>{
+    console.log(`Servidor rodando na porta http://localhost:${port}`)
 })
+
