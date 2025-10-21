@@ -15,7 +15,8 @@ app.use(express.json());
 const SECRET_KEY = "123456789";
 
 //LOCAL DO ARQUIVO (SIMULA O BANCO DE DADOS)
-const localUsuarios = path.join(__dirname,'usuario.json')
+const localUsuarios = path.join(__dirname,'usuarios.json')
+const localDados = path.join(__dirname, 'dados.json')
 
 // FUNÇÃO PARA LER O ARQUIVO USUARIOS
 const consultarUsuarios = ()=>{
@@ -27,6 +28,26 @@ const consultarUsuarios = ()=>{
 const salvarusuarios = (users)=>{
     fs.writeFileSync(localUsuarios,JSON.stringify(users,null,2))
 }
+
+//ROTA DASHBOARD 
+
+app.get("/dashboard",(req,res)=>{
+    try{
+        if(!fs.existsSync(localDados)){
+            return res.json([]);
+        }
+        const  fileContent = fs.readFileSync(localDados,"utf8")
+        const data = JSON.parse(fileContent)
+        res.json(data)
+
+    }catch(error){
+        console.error("Erro ao ler os dados")
+        res.status(500).json({message:"Erro ao carregar os dados"})
+    }
+})
+
+
+
 
 
 // ROTA LOGIN
@@ -53,7 +74,7 @@ app.post("/register", async(req,res)=>{
     const {email,senha}= req.body
 
     if(!email || !senha){ 
-        return res.status(400).json({message: "email e senha inválidos"})
+        return res.status(400).jjson({message: "email e senha inválidos"})
     }
 
     const users = consultarUsuarios();
@@ -74,4 +95,3 @@ res.status(201).json({message:"Usuário registrado com sucesso"})
 app.listen(port,()=>{
     console.log(`Servidor rodando na porta http://localhost:${port}`)
 })
-
